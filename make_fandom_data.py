@@ -144,7 +144,7 @@ class FandomData:
             time.sleep(1)
 
     def make_database(self):
-        """Make self.database which has same structure of Fanfiction.net."""
+        """Make self.database which has the same structure of Fanfiction.net."""
         print("Make fandom database")
         self.database = {'date': self.date}
 
@@ -159,7 +159,7 @@ class FandomData:
             database['fandoms'] = sorted(section.fandoms, key=lambda x: x['name'])
 
     def make_unified_database(self):
-        """Make self.database which unify all self.sections by using fandom['name'] as key."""
+        """Make self.database as unified fandom database sorted by fandom['name'] key."""
         print("Make unified fandom database")
         self.database = {
             'date': self.date,
@@ -194,7 +194,7 @@ class FandomData:
                 })
 
     def make_exceptional_fandom_database(self):
-        """Make self.database consists of crossover fandom['name'] which contain ' & '."""
+        """Make self.database as crossover fandom database which name contain ' & '."""
         print("Make exceptional fandom crossover database")
         self.database = {'date': self.date}
 
