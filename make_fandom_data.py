@@ -156,7 +156,7 @@ class FandomData:
 
             database['name'] = section.name
             database['url'] = section.url
-            database['fandoms'] = sorted(section.fandoms, key=lambda x: x['name'])
+            database['fandoms'] = section.fandoms
 
     def make_unified_database(self):
         """Make self.database as unified fandom database sorted by fandom['name'] key."""
@@ -202,7 +202,7 @@ class FandomData:
             fandom['name'] for section in self.sections for fandom in section.fandoms
             if section.crossover == 'crossover' and ' & ' in fandom['name']
         ]
-        self.database['fandoms'] = sorted(exceptional_fandomlist)
+        self.database['fandoms'] = list(dict.fromkeys(sorted(exceptional_fandomlist)))
 
     def write_json_file(self, filename: str):
         """Write self.database as json file by filename.
