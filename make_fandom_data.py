@@ -202,7 +202,7 @@ class FandomData:
             fandom['name'] for section in self.sections for fandom in section.fandoms
             if section.crossover == 'crossover' and ' & ' in fandom['name']
         ]
-        self.database['fandoms'] = list(dict.fromkeys(sorted(exceptional_fandomlist)))
+        self.database['fandoms'] = sorted(list(dict.fromkeys(exceptional_fandomlist)))
 
     def write_json_file(self, filename: str):
         """Write self.database as json file by filename.
