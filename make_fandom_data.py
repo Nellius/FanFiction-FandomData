@@ -8,8 +8,8 @@ import os
 import json
 from datetime import datetime, timezone
 from functools import reduce
-import requests
 from bs4 import BeautifulSoup
+import undetected_chromedriver as uc
 
 
 class SectionData:
@@ -39,53 +39,45 @@ class SectionData:
         self.crossover = 'crossover' if url_array[-3] == "crossovers" else 'not_crossover'
         self.fandoms = []
 
-    def scrape(self):
+    def scrape(self, html: str):
         """Scrape self.url and set self.name and self.fandoms."""
-        response = requests.get(self.url)
-        if response.status_code == 200:
-            html = response.text
-            soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "lxml")
 
-            regex = r"( Crossover)? \| FanFiction$"
-            self.name = re.sub(regex, '', soup.find('title').string)
+        regex = r"( Crossover)? \| FanFiction$"
+        self.name = re.sub(regex, '', soup.find('title').string)
 
-            div_tags = soup.find('div', id='list_output').find_all('div')
-            for div_tag in div_tags:
-                a_tag = div_tag.find('a')
-                url = 'https://www.fanfiction.net' + a_tag.get('href')
+        div_tags = soup.find('div', id='list_output').find_all('div')
+        for div_tag in div_tags:
+            a_tag = div_tag.find('a')
+            url = 'https://www.fanfiction.net' + a_tag.get('href')
 
-                # * a_tag.get('title') might contain "\'" and '\""
-                # * "lxml" can't parse a_tag.get('title') with '\"" correctly
-                # * a_tag.text don't contain "\'" and '\"", but long text is abbreviated by '...'
-                # If a_tag.get('title') contain '\"",
-                if re.search(r"\\$", a_tag.get('title')):
-                    # If a_tag.text is abbreviated by '...'
-                    if re.search(r"\.\.\.$", a_tag.text):
-                        # Get fandom name by scraping url
-                        name = self.get_fandom_name(url)
-                    else:
-                        # Use a_tag.text
-                        name = a_tag.text
+            # * a_tag.get('title') might contain "\'" or '\""'
+            # * "lxml" can't parse a_tag.get('title') with '\""' correctly
+            # * a_tag with long text is abbreviated by '...'
+            # If a_tag.get('title') contain '\""',
+            if re.search(r"\\$", a_tag.get('title')):
+                # If a_tag.text is abbreviated by '...'
+                if re.search(r"\.\.\.$", a_tag.text):
+                    # Get fandom name by scraping url
+                    name = self.get_fandom_name(url)
                 else:
-                    # Replace "\'" with "'" and use a_tag.get('title')
-                    name = re.sub(r"\\'", "'", a_tag.get('title'))
+                    # Use a_tag.text
+                    name = a_tag.text
+            else:
+                # Replace "\'" with "'" and use a_tag.get('title')
+                name = re.sub(r"\\'", "'", a_tag.get('title'))
 
-                str_numbers = div_tag.find('span').text[1:-1] \
-                    .replace(',', '').replace('K', ' 1000').replace('M', ' 1000000').split(' ')
-                numbers = [float(i) for i in str_numbers]
-                rough_story_number = int(reduce((lambda x, y: x * y), numbers))
+            str_numbers = div_tag.find('span').text[1:-1] \
+                .replace(',', '').replace('K', ' 1000').replace('M', ' 1000000').split(' ')
+            numbers = [float(i) for i in str_numbers]
+            rough_story_number = int(reduce((lambda x, y: x * y), numbers))
 
-                fandom = {
-                    'name': name,
-                    'url': url,
-                    'rough_story_number': rough_story_number
-                }
-                # if (self.crossover == 'crossover'):
-                #    fandom['id'] = fandom['url'].split('/')[-2]
-                self.fandoms.append(fandom)
-        else:
-            print("Error, response.status_code is {}".format(response.status_code))
-            sys.exit()
+            fandom = {
+                'name': name,
+                'url': url,
+                'rough_story_number': rough_story_number
+            }
+            self.fandoms.append(fandom)
 
     @staticmethod
     def get_fandom_name(url: str) -> str:
@@ -99,17 +91,22 @@ class SectionData:
             str: scraped fandom name
 
         """
-        response = requests.get(url)
-        if response.status_code == 200:
-            html = response.text
-            soup = BeautifulSoup(html, "lxml")
-            regex = r" (FanFiction Archive|Crossover) \| FanFiction$"
-            name = re.sub(regex, '', soup.find('title').string)
-            time.sleep(1)
-            return name
 
-        print("Error, response.status_code is {}".format(response.status_code))
-        sys.exit()
+        options = uc.ChromeOptions()
+        options.headless = True
+        options.add_argument('--headless')
+        chrome = uc.Chrome(options=options)
+
+        chrome.get(url)
+        html = chrome.page_source
+        soup = BeautifulSoup(html, "lxml")
+
+        regex = r" (FanFiction Archive|Crossover) \| FanFiction$"
+        name = re.sub(regex, '', soup.find('title').string)
+
+        time.sleep(5)
+        chrome.quit()
+        return name
 
 
 class FandomData:
@@ -138,10 +135,26 @@ class FandomData:
     def scrape(self):
         """Scrape all urls of self.sections."""
         print("Start scraping...")
-        for section in self.sections:
+        options = uc.ChromeOptions()
+        options.headless = True
+        options.add_argument('--headless')
+        chrome = uc.Chrome(options=options)
+
+        length = len(self.sections)
+        for i, section in enumerate(self.sections):
             print(section.url)
-            section.scrape()
-            time.sleep(1)
+            try:
+                chrome.get(section.url)
+                html = chrome.page_source
+                section.scrape(html)
+            except Exception as e:
+                print("Get page source error!")
+                print(e)
+
+            if i != length - 1:
+                time.sleep(5)
+
+        chrome.quit()
 
     def make_database(self):
         """Make self.database which has the same structure of Fanfiction.net."""

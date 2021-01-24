@@ -12,7 +12,7 @@ Make fandom data json files by scaping
 git clone git@github.com:Nellius/FanFiction-FandomData.git
 cd Fanfiction-FandomData
 # requirements
-pip install requests bs4 lxml
+pip install undetected_chromedriver bs4 lxml
 # run
 python make_fandom_data.py
 ```
