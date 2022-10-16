@@ -135,13 +135,14 @@ class FandomData:
     def scrape(self):
         """Scrape all urls of self.sections."""
         print("Start scraping...")
-        options = uc.ChromeOptions()
-        options.headless = True
-        options.add_argument('--headless')
-        chrome = uc.Chrome(options=options)
 
         length = len(self.sections)
         for i, section in enumerate(self.sections):
+            options = uc.ChromeOptions()
+            options.headless = True
+            options.add_argument('--headless')
+            chrome = uc.Chrome(options=options)
+
             print(section.url)
             try:
                 chrome.get(section.url)
@@ -151,10 +152,9 @@ class FandomData:
                 print("Get page source error!")
                 print(e)
 
+            chrome.quit()
             if i != length - 1:
-                time.sleep(5)
-
-        chrome.quit()
+                time.sleep(10)
 
     def make_database(self):
         """Make self.database which has the same structure of Fanfiction.net."""
