@@ -93,8 +93,7 @@ class SectionData:
         """
 
         options = uc.ChromeOptions()
-        options.headless = True
-        options.add_argument('--headless')
+        options.add_argument('--headless=new')
         chrome = uc.Chrome(options=options)
 
         chrome.get(url)
@@ -139,8 +138,7 @@ class FandomData:
         length = len(self.sections)
         for i, section in enumerate(self.sections):
             options = uc.ChromeOptions()
-            options.headless = True
-            options.add_argument('--headless')
+            options.add_argument('--headless=new')
             chrome = uc.Chrome(options=options)
 
             print(section.url)
