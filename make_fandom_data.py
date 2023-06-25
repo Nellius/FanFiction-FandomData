@@ -149,6 +149,8 @@ class FandomData:
             except Exception as e:
                 print("Get page source error!")
                 print(e)
+                chrome.quit()
+                sys.exit()
 
             chrome.quit()
             if i != length - 1:
