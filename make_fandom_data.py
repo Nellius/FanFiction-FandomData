@@ -138,7 +138,7 @@ class FandomData:
         length = len(self.sections)
         for i, section in enumerate(self.sections):
             options = uc.ChromeOptions()
-            options.add_argument('--headless=new')
+            # options.add_argument('--headless=new')
             chrome = uc.Chrome(options=options)
 
             print(section.url)
